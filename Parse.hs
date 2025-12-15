@@ -64,7 +64,7 @@ p1 <|> p2 = Parser $ \s -> case runParser p1 s of
 maybe :: Parser a -> Parser (Maybe a)
 maybe p = (Just <$> p) <|> pure Nothing
 
--- p1 <|> (p2 <|> (p3 <|> noMatch))
+-- p1 <|> (p2 <|> (p3 <|> (... <|> noMatch)))
 choice :: String -> [Parser a] -> Parser a
 choice description = foldr (<|>) noMatch
   where
@@ -112,25 +112,23 @@ pProgram :: Parser Program
 pProgram = many pStatement
 
 pStatement :: Parser Statement
-pStatement = choice "statement" [pDisplay]
+pStatement = choice "statement" [pDisplay, pDefine]
 
 -- pStatement = choice "statement" [pDisplay, pDefine, pWhile, pIf]
 
 pDisplay :: Parser Statement
 pDisplay = do
-  pKwd "display"
+  try $ pKwd "display"
   expr <- pExpr
-  -- St1 -> read id | epsilon
   id <- maybe (pKwd "read" *> pId)
   return (Display expr id)
 
--- parseDefine :: Parser Statement
--- parseDefine = do
---   keyword "define"
---   id <- parseIdentifier
---   symbol "="
---   expr <- parseExpression
---   return (Define id expr)
+pDefine :: Parser Statement
+pDefine = do
+  try $ pKwd "define"
+  id <- pId
+  symbol "="
+  Define id <$> pExpr
 
 -- parseWhile :: Parser Statement
 -- parseWhile = do
@@ -167,7 +165,7 @@ pLevel ops@(cur : nx) = do
   case res of
     Just res -> return res
     Nothing -> return lhs
-pLevel [] = Num <$> pInt
+pLevel [] = (Num <$> pInt) <|> (Var <$> pId)
 
 pInt :: Parser Int
 pInt = (read <$> many1 digit) <* spaces
