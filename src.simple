@@ -1,3 +1,9 @@
-define y = x + 5
-define z = y + 10
-display 1+2+3<4+5*6 read x
+
+display 3
+define x = 1
+display x read x
+while x < 10 run
+   display x
+   define x = x+1
+   display x < 5 > 3
+endwhile

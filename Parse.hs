@@ -4,6 +4,7 @@
 module Parse where
 
 import Data.Char
+import Debug.Trace
 import Lang
 import Prelude hiding (any, maybe)
 
@@ -62,7 +63,7 @@ p1 <|> p2 = Parser $ \s -> case runParser p1 s of
   success -> success
 
 maybe :: Parser a -> Parser (Maybe a)
-maybe p = (Just <$> p) <|> pure Nothing
+maybe p = (Just <$> try p) <|> pure Nothing
 
 -- p1 <|> (p2 <|> (p3 <|> (... <|> noMatch)))
 choice :: String -> [Parser a] -> Parser a
@@ -89,55 +90,47 @@ string = traverse char
 
 symbol s = string s <* spaces
 
-pToken :: String -> (String -> Bool) -> Parser String
-pToken typ predicate = do
+pId :: Parser String
+pId = do
+  c <- satisfy "identifier start" (\x -> isAlpha x || x == '_')
+  cs <- many (satisfy "identifier" (\x -> isAlphaNum x || x == '_'))
   spaces
-  token <- many1 (satisfy "not space" (not . isSpace))
-  spaces
-  if predicate token then return token else parseError typ token
-
-pId = pToken "identifier" isValidId
-  where
-    isValidId (c : cs) = (isAlpha c || c == '_') && all (\x -> isAlphaNum x || x == '_') cs
-    isValidId _ = False
-
-pKwd :: String -> Parser String
-pKwd kwd = pToken kwd (== kwd)
+  return (c : cs)
 
 run :: Parser a -> String -> Either ParseError a
 run p s = snd $ runParser (p <* eof) s
 
 -- our parser
 pProgram :: Parser Program
-pProgram = many pStatement
+pProgram = spaces *> many pStatement
 
 pStatement :: Parser Statement
-pStatement = choice "statement" [pDisplay, pDefine]
+pStatement = choice "statement" [pDisplay, pDefine, pWhile]
 
 -- pStatement = choice "statement" [pDisplay, pDefine, pWhile, pIf]
 
 pDisplay :: Parser Statement
 pDisplay = do
-  try $ pKwd "display"
+  try $ symbol "display"
   expr <- pExpr
-  id <- maybe (pKwd "read" *> pId)
+  id <- maybe (symbol "read" *> pId)
   return (Display expr id)
 
 pDefine :: Parser Statement
 pDefine = do
-  try $ pKwd "define"
+  try $ symbol "define"
   id <- pId
   symbol "="
   Define id <$> pExpr
 
--- parseWhile :: Parser Statement
--- parseWhile = do
---   keyword "while"
---   cond <- parseExpression
---   keyword "run"
---   body <- parseProgram
---   keyword "endwhile"
---   return (While cond body)
+pWhile :: Parser Statement
+pWhile = do
+  try $ symbol "while"
+  cond <- pExpr
+  symbol "run"
+  body <- pProgram
+  symbol "endwhile"
+  return (While cond body)
 
 -- parseIf :: Parser Statement
 -- parseIf = do
