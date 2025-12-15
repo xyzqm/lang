@@ -6,7 +6,6 @@ while x < 10 run
    define x = x+1
    display x < 5 > 3
 endwhile
-fail
 if x = 9 then
     display x
     define x = 25
@@ -19,5 +18,6 @@ else
     display x
     define x = 45
     display x
+endif
 endif
 display x + 4

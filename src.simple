@@ -1,4 +1,3 @@
-
 display 3
 define x = 1
 display x read x
@@ -7,3 +6,18 @@ while x < 10 run
    define x = x+1
    display x < 5 > 3
 endwhile
+if x = 9 then
+    display x
+    define x = 25
+    display x
+else if x = 10 then
+    display x
+    define x = 35
+    display x
+else
+    display x
+    define x = 45
+    display x
+endif
+endif
+display x + 4

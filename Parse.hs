@@ -100,14 +100,12 @@ pId = do
 run :: Parser a -> String -> Either ParseError a
 run p s = snd $ runParser (p <* eof) s
 
--- our parser
+-- STATEMENTS.
 pProgram :: Parser Program
 pProgram = spaces *> many pStatement
 
 pStatement :: Parser Statement
-pStatement = choice "statement" [pDisplay, pDefine, pWhile]
-
--- pStatement = choice "statement" [pDisplay, pDefine, pWhile, pIf]
+pStatement = choice "statement" [pDisplay, pDefine, pWhile, pIf]
 
 pDisplay :: Parser Statement
 pDisplay = do
@@ -132,19 +130,20 @@ pWhile = do
   symbol "endwhile"
   return (While cond body)
 
--- parseIf :: Parser Statement
--- parseIf = do
---   keyword "if"
---   cond <- parseExpression
---   keyword "then"
---   thenBlock <- parseProgram
---   -- St2 -> endif | else Program endif
---   elseBlock <-
---     (keyword "endif" >> return Nothing)
---       <|> (keyword "else" >> parseProgram >>= \p -> keyword "endif" >> return (Just p))
---   return (If cond thenBlock elseBlock)
+pIf :: Parser Statement
+pIf = do
+  try $ symbol "if"
+  cond <- pExpr
+  symbol "then"
+  thn <- pProgram
+  -- try parsing else
+  els <- maybe $ do
+    symbol "else"
+    pProgram
+  symbol "endif"
+  return (If cond thn els)
 
--- Expressions
+-- EXPRESSIONS.
 operations = [["<", ">", ">=", "<=", "<>", "="], ["+", "-"], ["*", "/"]]
 
 pLevel :: [[String]] -> Parser Expr
@@ -165,48 +164,3 @@ pInt = (read <$> many1 digit) <* spaces
 
 pExpr :: Parser Expr
 pExpr = pLevel operations
-
--- -- RelOp -> Add -> Mult -> Neg -> Value
--- parseExpression :: Parser Expr
--- parseExpression = parseAddExpr `chainl1` parseRelOp
-
--- parseAddExpr :: Parser Expr
--- parseAddExpr = parseMultExpr `chainl1` (parseOp "+" Add <|> parseOp "-" Sub)
-
--- parseMultExpr :: Parser Expr
--- parseMultExpr = parseNegExpr `chainl1` (parseOp "*" Mul <|> parseOp "/" Div)
-
--- -- NegExpr -> - Value | Value
--- parseNegExpr :: Parser Expr
--- parseNegExpr =
---   (symbol "-" >> parseValue >>= \v -> return (UnaryOp Negate v))
---     <|> parseValue
-
--- -- Value -> id | number | ( Expression )
--- parseValue :: Parser Expr
--- parseValue =
---   (Var <$> parseIdentifier)
---     <|> (Num <$> parseNumber)
---     <|> (symbol "(" *> parseExpression <* symbol ")")
-
--- -- Helpers
--- parseRelOp :: Parser (Expr -> Expr -> Expr)
--- parseRelOp = do
---   BinaryOp . RelOp <$> parseRelationalOperator
-
--- parseOp :: String -> BinOp -> Parser (Expr -> Expr -> Expr)
--- parseOp sym opConstructor = symbol sym >> return (BinaryOp opConstructor)
-
--- -- chainl1 handles the Left Recursion: "1 + 2 + 3" becomes ((1+2)+3)
--- chainl1 :: Parser a -> Parser (a -> a -> a) -> Parser a
--- chainl1 p op = do
---   x <- p
---   rest x
---   where
---     rest x =
---       ( do
---           f <- op
---           y <- p
---           rest (f x y)
---       )
---         <|> return x
