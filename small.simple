@@ -1,0 +1,4 @@
+display 3 + ( 5 * 2 )
+define x = 1
+display x read x
+display x

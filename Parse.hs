@@ -102,6 +102,7 @@ run p s = snd $ runParser (p <* eof) s
 
 -- STATEMENTS.
 pProgram :: Parser Program
+-- remove whitespace from the start
 pProgram = spaces *> many pStatement
 
 pStatement :: Parser Statement
@@ -149,15 +150,22 @@ operations = [["<", ">", ">=", "<=", "<>", "="], ["+", "-"], ["*", "/"]]
 pLevel :: [[String]] -> Parser Expr
 pLevel ops@(cur : nx) = do
   lhs <- pLevel nx
+  -- try parsing right hand side if it exists
   res <- maybe $ do
-    -- try parsing right hand side if it exists
     op <- choice (concat cur) (map symbol cur)
     rhs <- pLevel ops
     return (Binary op lhs rhs)
   case res of
     Just res -> return res
     Nothing -> return lhs
-pLevel [] = (Num <$> pInt) <|> (Var <$> pId)
+pLevel [] =
+  (Num <$> pInt)
+    <|> (Var <$> pId)
+    <|> do
+      symbol "("
+      e <- pExpr
+      symbol ")"
+      return e
 
 pInt :: Parser Int
 pInt = (read <$> many1 digit) <* spaces
