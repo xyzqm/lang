@@ -25,8 +25,8 @@ evalExpr (Env env) expr = case expr of
           "-" -> v1 - v2
           "*" -> v1 * v2
           "/" -> if v2 == 0 then 0 else v1 `div` v2
-          "==" -> if v1 == v2 then 1 else 0
-          "!=" -> if v1 /= v2 then 1 else 0
+          "=" -> if v1 == v2 then 1 else 0
+          "<>" -> if v1 /= v2 then 1 else 0
           "<" -> if v1 < v2 then 1 else 0
           "<=" -> if v1 <= v2 then 1 else 0
           ">" -> if v1 > v2 then 1 else 0

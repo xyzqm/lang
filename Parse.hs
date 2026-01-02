@@ -1,9 +1,13 @@
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Parse where
 
 import Data.Char
+import Data.List (sortBy)
+import Data.Ord (comparing)
+import Data.Ord qualified
 import Debug.Trace
 import Lang
 import Prelude hiding (any, maybe)
@@ -11,9 +15,19 @@ import Prelude hiding (any, maybe)
 -- parser primitives
 data ParseError = ParseError
   { expected :: String,
-    found :: String
+    found :: String,
+    location :: String
   }
-  deriving (Show)
+
+instance Show ParseError where
+  show (ParseError expct found loc) =
+    "ParseError: expected "
+      ++ show expct
+      ++ ", found "
+      ++ show found
+      ++ " at: "
+      ++ take 40 loc
+      ++ (if length loc > 40 then "..." else "")
 
 newtype Parser a = Parser {runParser :: String -> (String, Either ParseError a)}
   deriving (Functor)
@@ -31,16 +45,16 @@ instance Monad Parser where
 
 any :: Parser Char
 any = Parser $ \case
-  [] -> ("", Left $ ParseError "any character" "the end of the input")
+  [] -> ("", Left $ ParseError "any character" "the end of the input" "")
   (x : xs) -> (xs, Right x)
 
 eof :: Parser ()
 eof = Parser $ \case
   [] -> ("", Right ())
-  s@(c : _) -> (s, Left $ ParseError "the end of the input" [c])
+  s@(c : _) -> (s, Left $ ParseError "the end of the input" [c] s)
 
 parseError :: String -> String -> Parser a
-parseError expected found = Parser (,Left $ ParseError expected found)
+parseError expected found = Parser $ \s -> (s, Left $ ParseError expected found s)
 
 satisfy :: String -> (Char -> Bool) -> Parser Char
 satisfy description predicate = try $ do
@@ -150,22 +164,28 @@ operations = [["<", ">", ">=", "<=", "<>", "="], ["+", "-"], ["*", "/"]]
 pLevel :: [[String]] -> Parser Expr
 pLevel ops@(cur : nx) = do
   lhs <- pLevel nx
-  -- try parsing right hand side if it exists
+  let sortedOps = sortBy (comparing (Data.Ord.Down . length)) cur
   res <- maybe $ do
-    op <- choice (concat cur) (map symbol cur)
+    op <- choice (concat sortedOps) (map (try . symbol) sortedOps)
     rhs <- pLevel ops
     return (Binary op lhs rhs)
   case res of
     Just res -> return res
     Nothing -> return lhs
 pLevel [] =
-  (Num <$> pInt)
-    <|> (Var <$> pId)
-    <|> do
-      symbol "("
-      e <- pExpr
-      symbol ")"
-      return e
+  choice
+    "factor"
+    [ Num <$> pInt,
+      Var <$> pId,
+      do
+        symbol "("
+        e <- pExpr
+        symbol ")"
+        return e,
+      do
+        symbol "-"
+        Binary "-" (Num 0) <$> pExpr
+    ]
 
 pInt :: Parser Int
 pInt = (read <$> many1 digit) <* spaces

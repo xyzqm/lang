@@ -6,9 +6,7 @@ import Parse
 main :: IO ()
 main = do
   -- read from source file
-  file <- readFile "small.simple"
-
-  print $ run pProgram file
+  file <- readFile "src.simple"
 
   case run pProgram file of
     Left err -> print err
