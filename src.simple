@@ -1,9 +1,6 @@
-define trial = 3
+display 0 read trial
 define cnt = 0
 while cnt < trial run
-    display 0 read x
-    display 0 read y
-    display x = y
-    display x <> y
+    display cnt
     define cnt = cnt + 1
 endwhile

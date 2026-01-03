@@ -15,17 +15,14 @@ import Prelude hiding (any, maybe)
 -- parser primitives
 data ParseError = ParseError
   { expected :: String,
-    found :: String,
     location :: String
   }
 
 instance Show ParseError where
-  show (ParseError expct found loc) =
+  show (ParseError expct loc) =
     "ParseError: expected "
       ++ show expct
-      ++ ", found "
-      ++ show found
-      ++ " at: "
+      ++ " at\n"
       ++ take 40 loc
       ++ (if length loc > 40 then "..." else "")
 
@@ -45,16 +42,16 @@ instance Monad Parser where
 
 any :: Parser Char
 any = Parser $ \case
-  [] -> ("", Left $ ParseError "any character" "the end of the input" "")
+  [] -> ("", Left $ ParseError "any character" "")
   (x : xs) -> (xs, Right x)
 
 eof :: Parser ()
 eof = Parser $ \case
   [] -> ("", Right ())
-  s@(c : _) -> (s, Left $ ParseError "the end of the input" [c] s)
+  s@(c : _) -> (s, Left $ ParseError "the end of the input" s)
 
 parseError :: String -> String -> Parser a
-parseError expected found = Parser $ \s -> (s, Left $ ParseError expected found s)
+parseError expected found = Parser $ \s -> (s, Left $ ParseError expected s)
 
 satisfy :: String -> (Char -> Bool) -> Parser Char
 satisfy description predicate = try $ do
@@ -102,7 +99,7 @@ spaces = many space
 
 string = traverse char
 
-symbol s = string s <* spaces
+symbol s = try (string s <* spaces) <|> parseError s ""
 
 pId :: Parser String
 pId = do
