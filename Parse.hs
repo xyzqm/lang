@@ -161,7 +161,7 @@ operations = [["<", ">", ">=", "<=", "<>", "="], ["+", "-"], ["*", "/"]]
 pLevel :: [[String]] -> Parser Expr
 pLevel ops@(cur : nx) = do
   lhs <- pLevel nx
-  let sortedOps = sortBy (comparing (Data.Ord.Down . length)) cur
+  let sortedOps = sortBy (comparing (Data.Ord.Down . length)) cur -- sort in desending order of length
   res <- maybe $ do
     op <- choice (concat sortedOps) (map (try . symbol) sortedOps)
     rhs <- pLevel ops
