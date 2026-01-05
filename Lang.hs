@@ -9,6 +9,7 @@ data Statement
   | Define Id Expr
   | While Expr Program
   | If Expr Program (Maybe Program)
+  | Void
   deriving (Show, Eq)
 
 data Expr

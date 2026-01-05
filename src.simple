@@ -1,7 +1,0 @@
-display 0 read trial
-define cnt = 0
-while cnt < trial run
-    display cnt
-    define cnt = cnt + 1
-    if cnt = 3 then display 67 endif
-endwhile

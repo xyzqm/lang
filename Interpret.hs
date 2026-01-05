@@ -1,4 +1,4 @@
-module Interpret where
+module Interpret (interpret) where
 
 import Data.Map (Map)
 import Data.Map qualified as Map
@@ -36,10 +36,10 @@ evalExpr (Env env) expr = case expr of
 -- | Execute a statement, possibly printing output, and return the new environment
 execStatement :: Env -> Statement -> IO Env
 execStatement env stmt = case stmt of
-  Display expr mLabel -> do
+  Display expr readId -> do
     let val = evalExpr env expr
     print val
-    case mLabel of
+    case readId of
       Nothing -> return env
       Just name -> do
         putStr (name ++ ": ")
@@ -48,9 +48,7 @@ execStatement env stmt = case stmt of
           [(n, "")] ->
             let Env vars = env
              in return $ Env (Map.insert name n vars)
-          _ -> do
-            putStrLn "Invalid input, expected an integer."
-            return env
+          _ -> ioError (userError "Invalid input, expected an integer.")
   Define name expr ->
     let val = evalExpr env expr
         Env vars = env
@@ -67,6 +65,7 @@ execStatement env stmt = case stmt of
       else case elseProg of
         Nothing -> return env
         Just prog -> execProgram env prog
+  Void -> return env
 
 -- | Execute a program (list of statements)
 execProgram :: Env -> Program -> IO Env
@@ -74,3 +73,6 @@ execProgram env [] = return env
 execProgram env (s : ss) = do
   env' <- execStatement env s
   execProgram env' ss
+
+interpret :: Program -> IO Env
+interpret = execProgram (Env mempty)

@@ -1,0 +1,14 @@
+# compute fibonacci numbers
+define x = 1
+define y = 1
+display 0 read num
+define count = 0
+while count < num run
+  display x
+  define temp = x + y
+  define x = y
+  define y = temp
+  define count = count + 1
+endwhile
+
+# expected output: the first num fibonacci numbers

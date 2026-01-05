@@ -117,7 +117,14 @@ pProgram :: Parser Program
 pProgram = spaces *> many pStatement
 
 pStatement :: Parser Statement
-pStatement = choice "statement" [pDisplay, pDefine, pWhile, pIf]
+pStatement = choice "statement" [pDisplay, pDefine, pWhile, pIf, pComment]
+
+pComment :: Parser Statement
+pComment = do
+  try $ symbol "#"
+  comment <- many (satisfy "comment" (/= '\n'))
+  symbol "\n"
+  return Void
 
 pDisplay :: Parser Statement
 pDisplay = do

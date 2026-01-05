@@ -1,0 +1,7 @@
+display 0 read trials
+while trials > 0 run
+  display 0 read x
+  display 0 read y
+  if x > y then display x else display y endif
+  define trials = trials - 1
+endwhile
