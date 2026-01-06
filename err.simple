@@ -1,0 +1,5 @@
+while a <= b run
+  define a = a + 1
+  5 + 3
+
+# simple example of erroneous code
