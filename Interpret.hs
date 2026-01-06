@@ -1,18 +1,22 @@
+-- | The 'Interpret' module provides evaluation and execution for the language AST.
 module Interpret (interpret) where
 
 import Data.Map (Map)
 import Data.Map qualified as Map
 import Lang
 
+-- | The environment mapping variable names to integer values.
 newtype Env = Env {envVars :: Map String Int}
 
 instance Show Env where
+  -- \| Pretty-prints an environment.
   show (Env env) = "Env {envVars = " ++ show env ++ "}"
 
 instance Eq Env where
+  -- \| Checks equality of two environments.
   (Env env1) == (Env env2) = env1 == env2
 
--- | Evaluate an expression in the given environment
+-- | Evaluates an expression in the given environment.
 evalExpr :: Env -> Expr -> Int
 evalExpr (Env env) expr = case expr of
   Num n -> n
@@ -35,7 +39,7 @@ evalExpr (Env env) expr = case expr of
           ">=" -> if v1 >= v2 then 1 else 0
           _ -> 0
 
--- | Execute a statement, possibly printing output, and return the new environment
+-- | Executes a statement, possibly printing output, and returns the new environment.
 execStatement :: Env -> Statement -> IO Env
 execStatement env stmt = case stmt of
   Display expr readId -> do
@@ -57,6 +61,7 @@ execStatement env stmt = case stmt of
      in return $ Env (Map.insert name val vars)
   While cond body -> loop env
     where
+      -- \| Helper function to repeatedly execute the body while the condition is true.
       loop e =
         if evalExpr e cond /= 0
           then execProgram e body >>= loop
@@ -69,12 +74,13 @@ execStatement env stmt = case stmt of
         Just prog -> execProgram env prog
   Void -> return env
 
--- | Execute a program (list of statements)
+-- | Executes a program (list of statements) in the given environment.
 execProgram :: Env -> Program -> IO Env
 execProgram env [] = return env
 execProgram env (s : ss) = do
   env' <- execStatement env s
   execProgram env' ss
 
+-- | Interprets a program from scratch (with an empty environment).
 interpret :: Program -> IO Env
 interpret = execProgram (Env mempty)
