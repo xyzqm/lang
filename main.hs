@@ -1,6 +1,7 @@
 import Control.Monad
 import Interpret
 import Parse
+import System.Environment
 
 inc :: Int -> IO Int
 inc n = do
@@ -9,8 +10,10 @@ inc n = do
 
 main :: IO ()
 main = do
+  args <- getArgs
+  putStrLn $ "Executing file: " ++ head args
   -- read from source file
-  file <- readFile "binary.simple"
+  file <- readFile $ head args
 
   case run pProgram file of
     Left err -> print err
