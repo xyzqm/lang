@@ -21,6 +21,8 @@ evalExpr (Env env) expr = case expr of
     let v1 = evalExpr (Env env) e1
         v2 = evalExpr (Env env) e2
      in case op of
+          "or" -> max v1 v2
+          "and" -> min v1 v2
           "+" -> v1 + v2
           "-" -> v1 - v2
           "*" -> v1 * v2

@@ -1,0 +1,13 @@
+display 0 read num
+define cur = 1
+
+
+while cur <= num run
+  if num / cur * cur = num and num / cur / 2 * 2 <> num / cur then
+    display cur
+    define num = num - cur
+  endif
+  define cur = cur * 2
+endwhile
+
+# should output binary decomposition of num

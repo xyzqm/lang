@@ -1,8 +1,7 @@
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE LambdaCase #-}
 
-module Parse where
+module Parse (run, pProgram) where
 
 import Data.Char
 import Data.List (sortBy)
@@ -163,19 +162,18 @@ pIf = do
   return (If cond thn els)
 
 -- EXPRESSIONS.
-operations = [["<", ">", ">=", "<=", "<>", "="], ["+", "-"], ["*", "/"]]
+operations = [["and", "or"], ["<", ">", ">=", "<=", "<>", "="], ["+", "-"], ["*", "/"]]
 
 pLevel :: [[String]] -> Parser Expr
 pLevel ops@(cur : nx) = do
   lhs <- pLevel nx
   let sortedOps = sortBy (comparing (Data.Ord.Down . length)) cur -- sort in desending order of length
-  res <- maybe $ do
-    op <- choice (concat sortedOps) (map (try . symbol) sortedOps)
-    rhs <- pLevel ops
-    return (Binary op lhs rhs)
-  case res of
-    Just res -> return res
-    Nothing -> return lhs
+  let pNx = do
+        op <- choice (concat sortedOps) (map (try . symbol) sortedOps)
+        expr <- pLevel nx
+        return (op, expr)
+  rem <- many pNx
+  return $ foldl (\acc (op, expr) -> Binary op acc expr) lhs rem
 pLevel [] =
   choice
     "factor"

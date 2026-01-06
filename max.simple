@@ -5,3 +5,5 @@ while trials > 0 run
   if x > y then display x else display y endif
   define trials = trials - 1
 endwhile
+
+# run n trials where you output the max of two numbers
