@@ -165,7 +165,7 @@ pIf = do
 operations = [["and", "or"], ["<", ">", ">=", "<=", "<>", "="], ["+", "-"], ["*", "/"]]
 
 pLevel :: [[String]] -> Parser Expr
-pLevel ops@(cur : nx) = do
+pLevel (cur : nx) = do
   lhs <- pLevel nx
   let sortedOps = sortBy (comparing (Data.Ord.Down . length)) cur -- sort in desending order of length
   let pNx = do
